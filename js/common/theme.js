@@ -1,5 +1,3 @@
-import { storage } from './storage.js';
-
 export const theme = (() => {
 
     const themeColors = {
@@ -14,11 +12,6 @@ export const theme = (() => {
     let isAuto = false;
 
     /**
-     * @type {ReturnType<typeof storage>|null}
-     */
-    let themes = null;
-
-    /**
      * @type {HTMLElement|null}
      */
     let metaTheme = null;
@@ -26,12 +19,17 @@ export const theme = (() => {
     /**
      * @returns {void}
      */
-    const setLight = () => themes.set('active', 'light');
+    const setLight = () => localStorage.setItem('theme', 'light');
 
     /**
      * @returns {void}
      */
-    const setDark = () => themes.set('active', 'dark');
+    const setDark = () => localStorage.setItem('theme', 'dark');
+
+    /**
+     * @returns {string}
+     */
+    const getTheme = () => localStorage.getItem('theme') || 'dark'; // Default to dark if no theme is set
 
     /**
      * @param {string[]} listTheme
@@ -66,7 +64,7 @@ export const theme = (() => {
      * @returns {boolean|string}
      */
     const isDarkMode = (dark = null, light = null) => {
-        const status = themes.get('active') === 'dark';
+        const status = getTheme() === 'dark';
 
         if (dark && light) {
             return status ? dark : light;
@@ -105,28 +103,24 @@ export const theme = (() => {
      * @returns {void}
      */
     const init = () => {
-        themes = storage('theme');
         metaTheme = document.querySelector('meta[name="theme-color"]');
 
-        if (!themes.has('active')) {
-            window.matchMedia('(prefers-color-scheme: dark)').matches ? setDark() : setLight();
+        // Initialize theme based on localStorage or default to dark
+        if (!localStorage.getItem('theme')) {
+            setDark(); // Default to dark theme
         }
 
-        switch (document.documentElement.getAttribute('data-bs-theme')) {
-            case 'dark':
-                setDark();
-                break;
-            case 'light':
-                setLight();
-                break;
-            default:
-                isAuto = true;
-        }
-
-        if (isDarkMode()) {
+        // Apply the theme
+        if (getTheme() === 'dark') {
             onDark();
         } else {
             onLight();
+        }
+
+        // Check if auto mode is enabled
+        const bsTheme = document.documentElement.getAttribute('data-bs-theme');
+        if (bsTheme !== 'dark' && bsTheme !== 'light') {
+            isAuto = true;
         }
     };
 

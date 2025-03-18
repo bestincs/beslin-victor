@@ -1,20 +1,7 @@
-import { image } from './image.js';
-import { audio } from './audio.js';
-import { progress } from './progress.js';
-import { util } from '../../common/util.js';
-import { bs } from '../../libs/bootstrap.js';
 import { theme } from '../../common/theme.js';
-import { storage } from '../../common/storage.js';
-import { session } from '../../common/session.js';
-import { offline } from '../../common/offline.js';
 import { basicAnimation, openAnimation } from '../../libs/confetti.js';
 
 export const guest = (() => {
-
-    /**
-     * @type {ReturnType<typeof storage>|null}
-     */
-    let information = null;
 
     /**
      * @returns {void}
@@ -53,14 +40,14 @@ export const guest = (() => {
             const guestName = document.getElementById('guest-name');
             const div = document.createElement('div');
             div.classList.add('m-2');
-            div.innerHTML = `<small class="mt-0 mb-1 mx-0 p-0">${guestName?.getAttribute('data-message')}</small><p class="m-0 p-0" style="font-size: 1.5rem">${util.escapeHtml(name)}</p>`;
+            div.innerHTML = `<small class="mt-0 mb-1 mx-0 p-0">${guestName?.getAttribute('data-message')}</small><p class="m-0 p-0" style="font-size: 1.5rem">${name}</p>`;
 
             guestName?.appendChild(div);
         }
 
         const form = document.getElementById('form-name');
         if (form) {
-            form.value = information.get('name') ?? name;
+            form.value = name;
         }
     };
 
@@ -74,18 +61,18 @@ export const guest = (() => {
         slides.forEach((s, i) => {
             if (i === index) {
                 s.classList.add('slide-desktop-active');
-                util.changeOpacity(s, true);
+                s.style.opacity = '1';
             }
         });
 
-        const nextSlide = async () => {
-            await util.changeOpacity(slides[index], false);
+        const nextSlide = () => {
+            slides[index].style.opacity = '0';
             slides[index].classList.remove('slide-desktop-active');
 
             index = (index + 1) % slides.length;
 
             slides[index].classList.add('slide-desktop-active');
-            await util.changeOpacity(slides[index], true);
+            slides[index].style.opacity = '1';
         };
 
         setInterval(nextSlide, 6000);
@@ -105,12 +92,19 @@ export const guest = (() => {
         }
 
         slide();
-        audio.play();
+
+        // Play local audio directly
+        const audioEl = document.getElementById('background-audio');
+        if (audioEl) {
+            audioEl.play();
+        }
+
         theme.spyTop();
 
         basicAnimation();
-        util.timeOut(openAnimation, 1500);
-        util.changeOpacity(document.getElementById('welcome'), false, 0.04).then((el) => el.remove());
+        setTimeout(openAnimation, 1500);
+        document.getElementById('welcome').style.opacity = '0';
+        document.getElementById('welcome').remove();
     };
 
     /**
@@ -139,7 +133,7 @@ export const guest = (() => {
      */
     const animateSvg = () => {
         document.querySelectorAll('svg').forEach((el) => {
-            util.timeOut(() => el.classList.add(el.getAttribute('data-class')), parseInt(el.getAttribute('data-time')));
+            setTimeout(() => el.classList.add(el.getAttribute('data-class')), parseInt(el.getAttribute('data-time')));
         });
     };
 
@@ -175,73 +169,33 @@ export const guest = (() => {
         buildGoogleCalendar();
         document.getElementById('root').style.opacity = '1';
 
-        if (information.has('presence')) {
-            document.getElementById('form-presence').value = information.get('presence') ? '1' : '2';
-        }
-
         window.AOS.init();
         document.body.scrollIntoView({ behavior: 'instant' });
 
-        await util.changeOpacity(document.getElementById('welcome'), true);
-        await util.changeOpacity(document.getElementById('loading'), false, 0.04).then((el) => el.remove());
+        document.getElementById('welcome').style.opacity = '1';
+        document.getElementById('loading').style.opacity = '0';
+        document.getElementById('loading').remove();
     };
 
     /**
      * @returns {void}
      */
     const domLoaded = () => {
-        offline.init();
-        progress.init();
-        information = storage('information');
-        const token = document.body.getAttribute('data-key');
+        theme.init();
 
-        document.addEventListener('progress.done', () => booting());
+        // Directly initialize the application without waiting for progress events
+        booting();
+
         document.addEventListener('hide.bs.modal', () => document.activeElement?.blur());
-
-        if (token && token.length > 0) {
-            progress.add(); // for config
-            progress.add(); // for audio
-
-            const img = image.init();
-            if (!img.hasDataSrc()) {
-                img.load();
-            }
-
-            const params = new URLSearchParams(window.location.search);
-            session.setToken(params.get('k') ?? token);
-
-            window.addEventListener('load', () => session.guest().then(() => {
-                progress.complete('config');
-
-                if (img.hasDataSrc()) {
-                    img.load();
-                }
-
-                audio.init();
-            }).catch(() => progress.invalid('config')));
-        }
     };
 
     /**
      * @returns {object}
      */
     const init = () => {
-        theme.init();
-        session.init();
-
-        if (session.isAdmin()) {
-            storage('user').clear();
-            storage('owns').clear();
-            storage('likes').clear();
-            storage('session').clear();
-            storage('tracker').clear();
-        }
-
         window.addEventListener('DOMContentLoaded', domLoaded);
 
         return {
-            util,
-            theme,
             guest: {
                 open,
                 modal,

@@ -13,7 +13,7 @@
   "lint:css": "stylelint css",
   "lint:html": "htmlhint **/*.html",
   "dev": "npx esbuild js/*.js --bundle --outdir=dist --servedir=.",
-  "build": "npx esbuild js/*.js --bundle --minify --outdir=dist && cpx 'assets/**/*' dist/assets && cpx 'index.html' dist"
+  "build": "npx esbuild js/*.js --bundle --minify --outdir=dist && cpx '**/*.{html,css,webp,ico,png}' dist && cpx 'assets/**/*' dist/assets"
 },
     "dependencies": {
         "esbuild": "^0.24.2"
