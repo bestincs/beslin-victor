@@ -2,19 +2,21 @@
     "devDependencies": {
         "@eslint/js": "^9.19.0",
         "cpx": "^1.5.0",
+        "cpy-cli": "^5.0.0",
         "eslint": "^9.19.0",
         "globals": "^15.14.0",
         "htmlhint": "^1.1.4",
+        "rimraf": "^6.0.1",
         "stylelint": "^16.6.1",
         "stylelint-config-recommended": "^14.0.0"
     },
-"scripts": {
-  "lint:js": "eslint js",
-  "lint:css": "stylelint css",
-  "lint:html": "htmlhint **/*.html",
-  "dev": "npx esbuild js/*.js --bundle --outdir=dist --servedir=.",
-  "build": "npx esbuild js/*.js --bundle --minify --outdir=dist && cpx '**/*.{html,css,webp,ico,png}' dist && cpx 'assets/**/*' dist/assets"
-},
+    "scripts": {
+        "lint:js": "eslint js",
+        "lint:css": "stylelint css",
+        "lint:html": "htmlhint **/*.html",
+        "dev": "npx esbuild js/*.js --bundle --outdir=dist --servedir=.",
+"build": "rimraf dist && npx esbuild js/*.js --bundle --minify --outdir=dist && cpy index.html dist && cpy \"**/*.{css,webp,ico,png}\" dist --parents && cpy \"assets/**/*\" \"dist/assets\""
+    },
     "dependencies": {
         "esbuild": "^0.24.2"
     }
